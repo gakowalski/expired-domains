@@ -1,11 +1,35 @@
+<form>
+    <input id="date" type="date" name="date" value="<?php echo $_GET['date'] ?? date('Y-m-d', strtotime('-30 day')); ?>">
+    <input type="submit" value="Submit">
+    <input type="button" onclick="document.getElementById('date').value=''" value="Clear">
+</form>
 <pre><?php
 
-$date = date('Y-m-d', strtotime('-8 hour'));
-if (false === file_exists("$date.txt")) {
-    $domains = file_get_contents('https://www.dns.pl/deleted_domains.txt');
-    file_put_contents("$date.txt", $domains);
+$config = [
+    'domains_folder' => 'domains',
+    'deleted_domains_txt' => 'https://www.dns.pl/deleted_domains.txt',
+    'domain_check_url' => 'https://seohost.pl/domeny/szukaj?q=',
+];
+
+if ($_GET['date'] === null) {
+    $date = date('Y-m-d', strtotime('-8 hour'));
+    $current_output_file = $config['domains_folder'] . '/' . $date . '.txt';
+
+    if (false === file_exists($current_output_file)) {
+        $domains = file_get_contents($config['deleted_domains_txt']);
+        file_put_contents($current_output_file, $domains);
+    } else {
+        $domains = file_get_contents($current_output_file);
+    }
 } else {
-    $domains = file_get_contents("$date.txt");
+    $date = $_GET['date'];
+    $current_output_file = $config['domains_folder'] . '/' . $date . '.txt';
+
+    if (false === file_exists($current_output_file)) {
+        $domains = [];
+    } else {
+        $domains = file_get_contents($current_output_file);
+    }
 }
 $domains = explode("\n", $domains);
 
@@ -32,7 +56,7 @@ foreach ($sorted_domains as $length => $domains) {
         if (php_sapi_name() === 'cli') {
             echo "$domain\n";
         } else {
-            echo "$domain<br>";
+            echo "<a href='{$config['domain_check_url']}$domain' target='_blank'>$domain</a><br>";
         }
     }
 }
